@@ -1,0 +1,34 @@
+{
+  "name": "socialecho",
+  "version": "1.0.0",
+  "description": "A social networking platform with automated content moderation and context-based authentication system.",
+  "main": "server/app.js",
+  "scripts": {
+    "start": "nodemon server/app.js",
+    "dev": "nodemon server/app.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/nz-m/SocialEcho.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/nz-m/SocialEcho/issues"
+  },
+  "homepage": "https://github.com/nz-m/SocialEcho#readme",
+  "dependencies": {
+    "express": "^4.18.2",
+    "mongoose": "^7.3.0",
+    "passport": "^0.6.0",
+    "passport-jwt": "^4.0.1",
+    "jsonwebtoken": "^9.0.0",
+    "dotenv": "^16.0.0",
+    "cors": "^2.8.5",
+    "morgan": "^1.10.0"
+  },
+  "devDependencies": {
+    "nodemon": "^2.0.22"
+  }
+}
