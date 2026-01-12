@@ -49,7 +49,13 @@ db.connect().catch((err) =>
 );
 
 // Middleware
-app.use(cors());
+app.use(
+  cors({
+    origin: ["https://social-echoo.vercel.app", "http://localhost:3000"],
+    credentials: true,
+  })
+);
+
 app.use(morgan("dev"));
 app.use("/assets/userFiles", express.static(__dirname + "/assets/userFiles"));
 app.use(
