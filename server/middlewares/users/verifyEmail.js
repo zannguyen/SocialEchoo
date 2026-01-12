@@ -6,9 +6,8 @@ const { query, validationResult } = require("express-validator");
 const { verifyEmailHTML } = require("../../utils/emailTemplates");
 
 const CLIENT_URL = process.env.CLIENT_URL;
-const EMAIL_SERVICE = process.env.EMAIL_SERVICE;
 
-// ================= VALIDATION =================
+// Validate query
 const verifyEmailValidation = [
   query("email").isEmail().normalizeEmail(),
   query("code").isLength({ min: 5, max: 5 }),
@@ -44,6 +43,7 @@ const sendVerificationEmail = async (req, res) => {
       },
     });
 
+    // check SMTP
     await transporter.verify();
     console.log("SMTP ready");
 
@@ -54,48 +54,43 @@ const sendVerificationEmail = async (req, res) => {
       html: verifyEmailHTML(name, verificationLink, verificationCode),
     });
 
-    await EmailVerification.deleteMany({ email });
-
-    const newVerification = new EmailVerification({
+    await new EmailVerification({
       email,
       verificationCode,
       messageId: info.messageId,
       for: "signup",
-      createdAt: new Date(),
-    });
+    }).save();
 
-    await newVerification.save();
-
-    return res.status(200).json({
-      message: `Verification email was successfully sent to ${email}`,
+    res.status(200).json({
+      message: `Verification email sent to ${email}`,
     });
   } catch (err) {
-    console.error("Mail error:", err);
-    return res.status(500).json({ message: err.message });
+    console.error("Mail error:", err.message);
+
+    res.status(500).json({
+      message: "Failed to send verification email",
+    });
   }
 };
 
-// ================= VERIFY EMAIL =================
+// ================= VERIFY =================
 const verifyEmail = async (req, res, next) => {
   const { code, email } = req.query;
 
   try {
     const [isVerified, verification] = await Promise.all([
       User.findOne({ email, isEmailVerified: true }),
-      EmailVerification.findOne({
-        email,
-        verificationCode: Number(code),
-      }),
+      EmailVerification.findOne({ email, verificationCode: code }),
     ]);
 
     if (isVerified) {
-      return res.status(400).json({ message: "Email is already verified" });
+      return res.status(400).json({ message: "Email already verified" });
     }
 
     if (!verification) {
       return res
         .status(400)
-        .json({ message: "Verification code is invalid or has expired" });
+        .json({ message: "Verification code invalid or expired" });
     }
 
     const updatedUser = await User.findOneAndUpdate(
@@ -107,7 +102,7 @@ const verifyEmail = async (req, res, next) => {
     await Promise.all([
       EmailVerification.deleteMany({ email }),
       new UserPreference({
-        user: updatedUser._id,
+        user: updatedUser,
         enableContextBasedAuth: true,
       }).save(),
     ]);
@@ -116,8 +111,8 @@ const verifyEmail = async (req, res, next) => {
     req.email = updatedUser.email;
     next();
   } catch (error) {
-    console.error("Verify error:", error);
-    return res.status(500).json({ message: "Internal server error" });
+    console.error("Verify email error:", error.message);
+    res.status(500).json({ message: "Internal server error" });
   }
 };
 
